@@ -79,22 +79,22 @@ def get_shuffle_data(width, height, block_width, block_height, pattern):
             'height': b
         })
 
-        if b > 0:
-            for l in range(y):
-                d = calcXCoordinateXRest_(l, y, pattern)
-                h = calcYCoordinateXRest_(d, s, a, g, pattern)
-                c = calcPositionWithRest_(d, s, f, block_width)
-                p = h * block_height
-                o = calcPositionWithRest_(l, s, f, block_width)
-                u = a * block_height
-                S.append({
-                    'srcX': o,
-                    'srcY': u,
-                    'destX': c,
-                    'destY': p,
-                    'width': block_width,
-                    'height': b
-                })
+    if b > 0:
+        for l in range(y):
+            d = calcXCoordinateXRest_(l, y, pattern)
+            h = calcYCoordinateXRest_(d, s, a, g, pattern)
+            c = calcPositionWithRest_(d, s, f, block_width)
+            p = h * block_height
+            o = calcPositionWithRest_(l, s, f, block_width)
+            u = a * block_height
+            S.append({
+                'srcX': o,
+                'srcY': u,
+                'destX': c,
+                'destY': p,
+                'width': block_width,
+                'height': b
+            })
 
     if f > 0:
         for m in range(g):
