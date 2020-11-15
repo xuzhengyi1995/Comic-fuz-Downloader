@@ -128,4 +128,15 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# If you are using PyCharm
+.idea/
+*.iws
+
+# Visual Studio Code
+.vscode/
+.history
+
+# PROJECT SPECIFIC
 *.jpg
+*.png
+!/assets/*
