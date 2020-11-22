@@ -1,40 +1,30 @@
-# Comic-fuz Downloader
+<h1 align="center">Comic-fuz Manga Downloader GUI</h1>
+<p align="center"><img src="https://i.imgur.com/LhjPTdo.png" width=200 height=200></p>
+<p align="center"><i>Download manga you rent from <a href="https://comic-fuz.com/">https://comic-fuz.com/</a>.</i></p>
+<hr>
 
-Download manga you rent from <https://comic-fuz.com/>
+English | [中文文档](docs/README_zh-CN.md)
 
-# How to Use
+<br>
 
-0.  Install python packages _pillow_ and _threadpool_.
+# Prerequisite
 
-    ```shell
-    pip install Pillow
-    pip install threadpool
-    ```
+You need to install a browser extension to export the `cookies.txt`. 
 
-1.  Add your cookies in the program.
+We recommend [Get cookies.txt](https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfleckgcbcid) for Chrome users; however, extensions for Firefox have not been tested yet.
 
-    **Remember to use F12 to see the cookies!**
+<br>
 
-    **Because some http only cookies can not be seen by javascript!**
+# Usage
 
-    > 1.  Open the page.
-    > 2.  Press F12.
-    > 3.  Click on the _Network_.
-    > 4.  Refresh the page.
-    > 5.  Find the first _viewer.html?cid=XXXXXXXXXXXXX......_ request, click it.
-    > 6.  On the right, there will be a _Request Headers_, go there.
-    > 7.  Find the _cookie:...._, copy the string after the _cookie:_, paste to the _settings.py_, _YOUR_COOKIES_HERE_
+<p align="center"><img src="https://i.imgur.com/PdT16Hk.png"></p>
 
-2.  Change the _URL_ in the _settings.py_.
+1. Export cookies.txt with the browser extension.
+2. Specify all the information, then click **Fetch**.
+3. After manga info were fetched, click **Download**.
 
-    The URL will have something like **viewer.html?cid=XXXX** in it, here we use the manga [ご注文はうさぎですか？　１巻](https://comic-fuz.com/viewer.html?cid=S00176-k-001&cty=1&cti=%E3%81%94%E6%B3%A8%E6%96%87%E3%81%AF%E3%81%86%E3%81%95%E3%81%8E%E3%81%A7%E3%81%99%E3%81%8B%EF%BC%9F%E3%80%80%EF%BC%91%E5%B7%BB&lin=0&bs=1).
+You may not want to download the whole magazine/manga, but a part of it. You can specify the page range in the Download Options with the following syntax. For example:
 
-    This is the URL of the **ご注文はうさぎですか？　１巻**: <https://comic-fuz.com/viewer.html?cid=S00176-k-001&cty=1&cti=%E3%81%94%E6%B3%A8%E6%96%87%E3%81%AF%E3%81%86%E3%81%95%E3%81%8E%E3%81%A7%E3%81%99%E3%81%8B%EF%BC%9F%E3%80%80%EF%BC%91%E5%B7%BB&lin=0&bs=1>
-
-    Just copy this URL to the `URL` in _settings.py_.
-
-3.  After edit the program, run `python main.py` to run it, very easy.
-
-# Notice
-
-1.  The `poolsize` by default is 5, it's already fast enough I think, you can change it but be careful that the server may **ban your ip or account** (I'm not sure, but be careful).
+- Download page 12: `12`
+- Download page 1, page 2 to 10 (includes page 10), and page 12: `1, 2-10, 12`
+- Download page 10 to 20 and page 50 to 60: `10-20, 50-60`
