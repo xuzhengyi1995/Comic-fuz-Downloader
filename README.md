@@ -1,7 +1,6 @@
 <h1 align="center">Comic-fuz Manga Downloader GUI</h1>
 <p align="center"><img src="https://i.imgur.com/LhjPTdo.png" width=200 height=200></p>
 <p align="center"><i>Download manga you rent from <a href="https://comic-fuz.com/">https://comic-fuz.com/</a>.</i></p>
-<hr>
 
 English | [中文文档](docs/README_zh-CN.md)
 
@@ -17,7 +16,7 @@ We recommend [Get cookies.txt](https://chrome.google.com/webstore/detail/get-coo
 
 # Usage
 
-<p align="center"><img src="https://i.imgur.com/PdT16Hk.png"></p>
+<p align="center"><img src="https://i.imgur.com/Buo5msj.png"></p>
 
 1. Export cookies.txt with the browser extension.
 2. Specify all the information, then click **Fetch**.
