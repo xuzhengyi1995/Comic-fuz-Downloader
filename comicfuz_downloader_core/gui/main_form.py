@@ -481,20 +481,20 @@ class MainForm:
 
     def thr_download_image(
             self, file_item: ComicFuzFileItem, license: ComicFuzLicense, http_util: HttpUtil,
-            save_to_path: Path,
+            save_to_path: Path, page_num: int,
     ):
         try:
             self.thr_download_image_core(file_item, license, http_util, save_to_path)
 
             self.queue.put(DelegatedTask(
-                func=self.download_image_finished, args=(True,)
+                func=self.download_image_finished, args=(True, page_num)
             ))
         except:
             self.queue.put(DelegatedTask(
-                func=self.download_image_finished, args=(False,)
+                func=self.download_image_finished, args=(False, page_num)
             ))
 
-    def download_image_finished(self, succeed: bool):
+    def download_image_finished(self, succeed: bool, page_num: int):
         self.num_task_finished += 1
         if succeed:
             self.num_task_succeed += 1
@@ -504,6 +504,8 @@ class MainForm:
         else:
             progress = int(self.num_task_finished / self.num_total_task * 100)
         self.progress_indicator.set(progress)
+
+        self.log_verbose(tr('Page {page} downloaded.').format(page=page_num))
 
         if self.num_task_finished >= self.num_total_task:
             self.reset_download_state()
@@ -549,9 +551,8 @@ class MainForm:
         for a, b in download_range:
             for i in range(a, b):
                 self.download_thread_pool.submit(
-                    self.thr_download_image,
-                    self.fuz_file_items[i - 1],
-                    self.fuz_license, self.http_util, save_to_path,
+                    self.thr_download_image, self.fuz_file_items[i - 1],
+                    self.fuz_license, self.http_util, save_to_path, i,
                 )
 
         self.spin_threads['state'] = 'disabled'
