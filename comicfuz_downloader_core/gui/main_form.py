@@ -541,6 +541,8 @@ class MainForm:
             self.log_and_show_error(tr('The images can not be saved to the specified path.'))
             return
 
+        self.http_util.set_proxy(proxy=self.get_proxy_url())
+
         download_range = self.parse_download_range()
         self.num_total_task, self.num_task_finished, self.num_task_succeed = 0, 0, 0
         for a, b in download_range:

@@ -31,10 +31,13 @@ class HttpUtil:
 
         # Set proxy
         if proxy:
-            self.sess.proxies = {
-                'http': proxy,
-                'https': proxy,
-            }
+            self.set_proxy(proxy)
+
+    def set_proxy(self, proxy: str):
+        self.sess.proxies = {
+            'http': proxy,
+            'https': proxy,
+        }
 
     def get(self, url, headers: Optional[Mapping[str, Any]] = None, /, **kwargs: any) -> requests.Response:
         if headers is None:
