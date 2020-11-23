@@ -417,8 +417,8 @@ class MainForm:
 
         self.log_info(tr('Manga info fetched. Ready to download.'))
 
-    def thr_fetch_manga_info_failed(self):
-        self.log_and_show_error(tr('Failed to fetch manga info'))
+    def thr_fetch_manga_info_failed(self, reason: str):
+        self.log_and_show_error(tr('Failed to fetch manga info. The traceback is listed below.\n{}').format(reason))
         self.fetch_btn['state'] = 'normal'
 
     def thr_fetch_manga_info(
@@ -431,6 +431,7 @@ class MainForm:
             traceback.print_exc()
             self.queue.put(DelegatedTask(
                 func=self.thr_fetch_manga_info_failed,
+                args=(traceback.format_exc(),)
             ))
             return
 

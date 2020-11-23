@@ -52,7 +52,7 @@ You will need Python 3.9 or above.
 The official released executable is packed with **PyInstaller**. We use these parameters to pack the scripts:
 
 ```shell
-pyinstaller --onefile --windowed --icon assets/logo-icon.ico --name ComicFuz-Downloader-GUI main.py
+pyinstaller --clean --onefile --windowed --icon assets/logo-icon.ico --name ComicFuz-Downloader-GUI --hidden-import urllib3.contrib.socks main.py
 ```
 
 To pack the project, you need to install PyInstaller and all the requirements of the project. These requirements, including PyInstaller, are defined in the `requirements.txt`. Thus, we suggest you install the PyInstaller  with `pip install -r requirements.txt` and under `venv`, then pack the executable with the command listed above.

@@ -53,7 +53,7 @@
 本项目所发布的 exe 程序是用  **PyInstaller** 打包的。在打包的时候，我们用到了这些参数：
 
 ```shell
-pyinstaller --onefile --windowed --icon assets/logo-icon.ico --name ComicFuz-Downloader-GUI main.py
+pyinstaller --clean --onefile --windowed --icon assets/logo-icon.ico --name ComicFuz-Downloader-GUI --hidden-import urllib3.contrib.socks main.py
 ```
 
 如果您想自己打包 exe 文件，那么您就需要安装 PyInstaller 和本项目所需的所有依赖包。本项目所需要的所有依赖包，包括 PyInstaller，已经全部定义在 `requirements.txt` 里了。因此，我们建议您在 `venv` 中运行 `pip install -r requirements.txt` 命令来安装所需依赖，然后使用上述命令来打包可执行文件。
