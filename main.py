@@ -1,7 +1,7 @@
-import json, sys
+import json
+import sys
 from copy import deepcopy
 from pathlib import Path
-import tkinter.messagebox as tkmsg
 
 from comicfuz_downloader_core import *
 
@@ -17,9 +17,7 @@ def main():
     config_path = file_root / 'gui-config.json'
     icon_path = file_root / 'assets' / 'logo-icon.ico'
 
-    if not icon_path.exists():
-        tkmsg.showerror(message='The logo icon file does not exist. Program will exit.')
-        exit(1)
+    icon_path_str = str(icon_path) if icon_path.exists() else ''
 
     try:
         config_raw = json.loads(config_path.read_text())
@@ -29,7 +27,7 @@ def main():
         config = DEFAULT_CONFIG
 
     while True:
-        main_form = MainForm(config, str(icon_path))
+        main_form = MainForm(config, icon_path_str)
         config, should_restart = main_form.main_loop()
         config_path.write_text(json.dumps(config), encoding='utf-8')
         if not should_restart:
