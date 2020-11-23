@@ -142,3 +142,12 @@ dmypy.json
 !/assets/*
 gui-config.json
 *.exe
+
+# PROJECT SPECIFIC: zipped files
+*.rar
+*.7z
+*.zip
+*.tar
+*.gz
+*.bz2
+*.xz
