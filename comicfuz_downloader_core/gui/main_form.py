@@ -4,6 +4,7 @@ __all__ = (
 
 import functools
 import re
+import threading
 import tkinter as tk
 import tkinter.filedialog as filedialog
 import tkinter.messagebox as tkmsg
@@ -34,13 +35,14 @@ class MainForm:
         # >>> Initialize class <<<
         self.num_total_task, self.num_task_finished, self.num_task_succeed = 0, 0, 0
         self.fuz_license, self.fuz_config_pack, self.fuz_url_info, self.fuz_file_items = None, None, None, None
-        self.download_thread_pool: Optional[ThreadPoolExecutor] = None
 
         self.__gui_config = gui_config
         I18nUtil.set_language(gui_config['language'])
         self.__should_restart_me = False
 
-        # >>> Initialize Queue and Timer <<<
+        # >>> Initialize Queue, Timer and threading utils <<<
+        self.download_thread_pool: Optional[ThreadPoolExecutor] = None
+        self.local_http_util: threading.local = None
         self.queue: "Queue[DelegatedTask]" = Queue()
 
         # >>> Initialize GUI <<<
@@ -392,13 +394,9 @@ class MainForm:
         self.clear_manga_info()
 
         self.fuz_url_info = url_info
-        proxy_url = self.get_proxy_url()
-
-        self.txt_cookie_path['state'] = 'disabled'
-        self.http_util = HttpUtil(self.cookie_path.get(), proxy_url)
         Thread(
             target=self.thr_fetch_manga_info,
-            args=(self.http_util, self.fuz_url_info),
+            args=(HttpUtil(Path(self.cookie_path.get()), self.get_proxy_url()), self.fuz_url_info),
             name='FetchMangaInfo',
         ).start()
 
@@ -481,10 +479,16 @@ class MainForm:
         save_image_file.write_bytes(descrambled)
 
     def thr_download_image(
-            self, file_item: ComicFuzFileItem, license: ComicFuzLicense, http_util: HttpUtil,
+            self, file_item: ComicFuzFileItem, license: ComicFuzLicense,
+            http_util_param: Tuple[Path, str],
             save_to_path: Path, page_num: int,
     ):
         try:
+            http_util = getattr(self.local_http_util, 'http_util', None)
+            if http_util is None:
+                http_util = HttpUtil(*http_util_param)
+                self.local_http_util.http_util = http_util
+
             self.thr_download_image_core(file_item, license, http_util, save_to_path)
 
             self.queue.put(DelegatedTask(
@@ -506,7 +510,10 @@ class MainForm:
             progress = int(self.num_task_finished / self.num_total_task * 100)
         self.progress_indicator.set(progress)
 
-        self.log_verbose(tr('Page {page} downloaded.').format(page=page_num))
+        if succeed:
+            self.log_verbose(tr('Page {page} successfully downloaded.').format(page=page_num))
+        else:
+            self.log_error(tr('Failed to download page {page}.').format(page=page_num))
 
         if self.num_task_finished >= self.num_total_task:
             self.reset_download_state()
@@ -518,6 +525,7 @@ class MainForm:
     def thr_reset_download_state(self):
         self.download_thread_pool.shutdown(wait=True, cancel_futures=True)
         self.download_thread_pool = None
+        self.local_http_util = None
 
         self.queue.put(DelegatedTask(
             func=self.reset_download_state_finished,
@@ -542,20 +550,19 @@ class MainForm:
             self.log_and_show_error(tr('The images can not be saved to the specified path.'))
             return
 
-        self.http_util.set_proxy(proxy=self.get_proxy_url())
-
         download_range = self.parse_download_range()
         self.num_total_task, self.num_task_finished, self.num_task_succeed = 0, 0, 0
         for a, b in download_range:
             self.num_total_task += b - a
 
         self.download_thread_pool = ThreadPoolExecutor(max_workers=int(self.spin_threads.get()))
+        self.local_http_util = threading.local()
 
         for a, b in download_range:
             for i in range(a, b):
                 self.download_thread_pool.submit(
                     self.thr_download_image, self.fuz_file_items[i - 1],
-                    self.fuz_license, self.http_util, save_to_path, i,
+                    self.fuz_license, (Path(self.cookie_path.get()), self.get_proxy_url()), save_to_path, i,
                 )
 
         self.spin_threads['state'] = 'disabled'
