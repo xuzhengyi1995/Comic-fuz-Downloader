@@ -5,10 +5,13 @@ __all__ = (
 from http.cookiejar import MozillaCookieJar
 from pathlib import Path
 from typing import Any, Mapping, Optional
+from urllib.parse import quote
 
 import chardet
 import requests
 from requests import Session
+
+from ..constant import *
 
 
 class HttpUtil:
@@ -46,7 +49,7 @@ class HttpUtil:
         return self.sess.get(url, headers={
             **self.COMMON_HEADER,
             **headers,
-        }, **kwargs)
+        }, timeout=DEFAULT_TIMEOUT, **kwargs)
 
     @staticmethod
     def read_text(response: requests.Response) -> str:
@@ -55,3 +58,14 @@ class HttpUtil:
         text = res_body_bytes.decode(encoding=encoding)
 
         return text
+
+    @staticmethod
+    def quote_non_latin_1_chars(url: str) -> str:
+        result = []
+        for c in url:
+            if 0 <= ord(c) < 256:
+                result.append(c)
+            else:
+                result.append(quote(c))
+
+        return ''.join(result)

@@ -5,8 +5,12 @@ __all__ = (
 
 from typing import List, NamedTuple
 
+from cachetools import LRUCache
+
 from ..constant import *
 from ..definition import *
+
+scramble_data_cache = LRUCache(maxsize=256)
 
 
 class ScrambleBlockInfo(NamedTuple):
@@ -43,6 +47,12 @@ class ScrambleCalculator:
         """
         Calculate how the scrambling is done. The result is in terms of List[ScrambleBlockInfo].
         """
+        # Find cache
+        cache_key = (width, height, pattern, block_width, block_height)
+        cache = scramble_data_cache.get(cache_key, default=None)
+        if cache is not None:
+            return cache
+
         y = width // block_width
         g = height // block_height
         f = width % block_width
@@ -135,6 +145,7 @@ class ScrambleCalculator:
                     height=block_height,
                 ))
 
+        scramble_data_cache[cache_key] = result
         return result
 
     @classmethod

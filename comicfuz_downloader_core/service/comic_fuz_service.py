@@ -44,7 +44,7 @@ class ComicFuzService:
             net_loc=url_info.net_loc,
             cid=url_info.cid,
         ), {
-            'Referer': url_info.raw_url
+            'Referer': HttpUtil.quote_non_latin_1_chars(url_info.raw_url)
         })
         resp_json = cls.__read_json(resp, ('url', 'auth_info'))
 

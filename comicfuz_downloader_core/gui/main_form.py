@@ -11,6 +11,7 @@ import tkinter.messagebox as tkmsg
 import tkinter.ttk as ttk
 import traceback
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from pathlib import Path
 from queue import Queue, Empty as QueueEmptyError
 from threading import Thread
@@ -29,6 +30,28 @@ RE_PAGE_RANGE = re.compile(r'(\d+|\d+-\d+)(,(\d+|\d+-\d+))*')
 RE_SPACE = re.compile(r'\s+')
 
 
+@dataclass
+class ImageDownloadTask:
+    # Indicate information of a file
+    file_item: ComicFuzFileItem
+    license: ComicFuzLicense
+
+    # Used to construct a HttpUtil
+    http_util_param: Tuple[Path, str]
+
+    # Save file to this folder
+    save_to_path: Path
+
+    # Save image file to this file path
+    save_image_file: Optional[Path]
+
+    # Number of page, for logging
+    page_num: int
+
+    # Downloaded image
+    image_bytes: Optional[bytes]
+
+
 class MainForm:
 
     def __init__(self, gui_config: GuiConfig, icon_path: str):
@@ -42,6 +65,7 @@ class MainForm:
 
         # >>> Initialize Queue, Timer and threading utils <<<
         self.download_thread_pool: Optional[ThreadPoolExecutor] = None
+        self.descramble_thread_pool: Optional[ThreadPoolExecutor] = None
         self.local_http_util: threading.local = None
         self.queue: "Queue[DelegatedTask]" = Queue()
 
@@ -229,6 +253,7 @@ class MainForm:
         self.scroll_text['state'] = 'normal'
         self.scroll_text.insert(tk.END, x + '\n', log_type)
         self.scroll_text['state'] = 'disabled'
+        self.scroll_text.see(tk.END)
 
     def log_verbose(self, x: str) -> None:
         self.__log(x, 'verbose')
@@ -387,6 +412,7 @@ class MainForm:
         try:
             url_info = ComicFuzUrlParser.parse(self.manga_url.get())
         except:
+            traceback.print_exc()
             self.log_and_show_error(
                 tr('Unable to parse Comic FUZ URL. You should specify the URL of the page that reads manga.'))
             return
@@ -465,38 +491,45 @@ class MainForm:
 
         return page_ranges
 
-    def thr_download_image_core(
-            self, file_item: ComicFuzFileItem, license: ComicFuzLicense, http_util: HttpUtil,
-            save_to_path: Path,
-    ) -> None:
-        save_image_file = (save_to_path / f'{file_item.file_disk_name}.png')
-        if save_image_file.exists():
-            return
-
-        image_bytes = ComicFuzService.get_image(file_item.file_path, license, http_util)
-        pattern = ScrambleCalculator.pattern(file_item)
-        descrambled = ImageDescrambler.descramble_image(image_bytes, pattern, file_item.dummy_pixels)
-        save_image_file.write_bytes(descrambled)
-
-    def thr_download_image(
-            self, file_item: ComicFuzFileItem, license: ComicFuzLicense,
-            http_util_param: Tuple[Path, str],
-            save_to_path: Path, page_num: int,
-    ):
+    def thr_download_image(self, task: ImageDownloadTask):
         try:
             http_util = getattr(self.local_http_util, 'http_util', None)
             if http_util is None:
-                http_util = HttpUtil(*http_util_param)
+                http_util = HttpUtil(*task.http_util_param)
                 self.local_http_util.http_util = http_util
 
-            self.thr_download_image_core(file_item, license, http_util, save_to_path)
+            task.save_image_file = (task.save_to_path / f'{task.file_item.file_disk_name}.png')
+            if task.save_image_file.exists():
+                self.queue.put(DelegatedTask(
+                    func=self.download_image_finished, args=(True, task.page_num)
+                ))
+                return
+
+            task.image_bytes = ComicFuzService.get_image(task.file_item.file_path, task.license, http_util)
+            self.descramble_thread_pool.submit(
+                self.thr_descramble_image, task
+            )
+        except:
+            traceback.print_exc()
+            self.queue.put(DelegatedTask(
+                func=self.download_image_finished, args=(False, task.page_num)
+            ))
+
+    def thr_descramble_image(
+            self, task: ImageDownloadTask,
+    ) -> None:
+        try:
+            pattern = ScrambleCalculator.pattern(task.file_item)
+            descrambled = ImageDescrambler.descramble_image(task.image_bytes, pattern, task.file_item.dummy_pixels)
+            task.save_image_file.write_bytes(descrambled)
 
             self.queue.put(DelegatedTask(
-                func=self.download_image_finished, args=(True, page_num)
+                func=self.download_image_finished, args=(True, task.page_num)
             ))
         except:
+            traceback.print_exc()
             self.queue.put(DelegatedTask(
-                func=self.download_image_finished, args=(False, page_num)
+                func=self.download_image_finished, args=(False, task.page_num)
             ))
 
     def download_image_finished(self, succeed: bool, page_num: int):
@@ -525,6 +558,8 @@ class MainForm:
     def thr_reset_download_state(self):
         self.download_thread_pool.shutdown(wait=True, cancel_futures=True)
         self.download_thread_pool = None
+        self.descramble_thread_pool.shutdown(wait=True, cancel_futures=True)
+        self.descramble_thread_pool = None
         self.local_http_util = None
 
         self.queue.put(DelegatedTask(
@@ -547,6 +582,7 @@ class MainForm:
         try:
             save_to_path = self.get_save_to_path()
         except:
+            traceback.print_exc()
             self.log_and_show_error(tr('The images can not be saved to the specified path.'))
             return
 
@@ -556,13 +592,22 @@ class MainForm:
             self.num_total_task += b - a
 
         self.download_thread_pool = ThreadPoolExecutor(max_workers=int(self.spin_threads.get()))
+        self.descramble_thread_pool = ThreadPoolExecutor()
         self.local_http_util = threading.local()
 
         for a, b in download_range:
             for i in range(a, b):
+                task = ImageDownloadTask(
+                    file_item=self.fuz_file_items[i - 1],
+                    license=self.fuz_license,
+                    http_util_param=(Path(self.cookie_path.get()), self.get_proxy_url()),
+                    save_to_path=save_to_path,
+                    save_image_file=None,
+                    page_num=i,
+                    image_bytes=None,
+                )
                 self.download_thread_pool.submit(
-                    self.thr_download_image, self.fuz_file_items[i - 1],
-                    self.fuz_license, (Path(self.cookie_path.get()), self.get_proxy_url()), save_to_path, i,
+                    self.thr_download_image, task
                 )
 
         self.spin_threads['state'] = 'disabled'
