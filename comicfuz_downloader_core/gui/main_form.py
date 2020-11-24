@@ -29,6 +29,7 @@ from ..util import *
 RE_PAGE_RANGE = re.compile(r'(\d+|\d+-\d+)(,(\d+|\d+-\d+))*')
 RE_SPACE = re.compile(r'\s+')
 
+MESSAGE_BOX_MAX_LENGTH = 128
 
 @dataclass
 class ImageDownloadTask:
@@ -88,7 +89,7 @@ class MainForm:
 
         # About menu
         submenu = tk.Menu(tearoff=0)
-        submenu.add_command(label=tr('About'))
+        submenu.add_command(label=tr('About'), command=self.about_me)
         menu.add_cascade(label=tr('Help'), menu=submenu)
         self.win['menu'] = menu
 
@@ -226,6 +227,9 @@ class MainForm:
 
         # Initial log, to solve the `Invalid index` issue
         self.scroll_text.insert(tk.INSERT, tr('Welcome to use the downloader.'), 'verbose')
+
+    def about_me(self):
+        tkmsg.showinfo(title=tr('[MessageBox] About'), message=tr('[MessageBox] [About Message]'), parent=self.win)
 
     def main_loop(self) -> Tuple[GuiConfig, bool]:
         """
@@ -381,7 +385,7 @@ class MainForm:
 
     def log_and_show_error(self, error_msg: str) -> None:
         self.log_error(error_msg)
-        tkmsg.showerror(title=tr('[MessageBox] Error'), message=error_msg, parent=self.win)
+        tkmsg.showerror(title=tr('[MessageBox] Error'), message=error_msg[:MESSAGE_BOX_MAX_LENGTH], parent=self.win)
 
     def get_proxy_url(self):
         proxy_scheme = self.proxy_state.get().strip()
