@@ -3,7 +3,7 @@ __all__ = (
 )
 
 import functools
-import re
+import re, os
 import threading
 import tkinter as tk
 import tkinter.filedialog as filedialog
@@ -470,16 +470,11 @@ class MainForm:
 
     def get_save_to_path(self) -> Path:
         save_to_path = Path(self.output_path.get().strip())
-        save_to_path.mkdir(exist_ok=True)
-
-        has_file = False
-        for _ in save_to_path.iterdir():
-            has_file = True
-            break
-
-        if has_file:
-            save_to_path = save_to_path / self.fuz_url_info.manga_dir_name
-            save_to_path.mkdir(exist_ok=True)
+        if save_to_path.exists():
+            if not save_to_path.is_dir():
+                raise RuntimeError('The save_to_path exists but is not a directory.')
+        else:
+            os.makedirs(save_to_path, exist_ok=True)
 
         return save_to_path
 
@@ -596,7 +591,7 @@ class MainForm:
             self.num_total_task += b - a
 
         self.download_thread_pool = ThreadPoolExecutor(max_workers=int(self.spin_threads.get()))
-        self.descramble_thread_pool = ThreadPoolExecutor()
+        self.descramble_thread_pool = ThreadPoolExecutor(max_workers=max(MAX_CPU_THREAD, os.cpu_count()))
         self.local_http_util = threading.local()
 
         for a, b in download_range:

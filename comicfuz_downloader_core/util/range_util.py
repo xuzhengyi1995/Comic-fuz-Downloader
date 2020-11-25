@@ -18,6 +18,9 @@ class RangeUtil:
         Merge right-open ranges.
         """
         ranges = sorted(ranges, key=lambda x: x[0])
+        if len(ranges) == 0:
+            return []
+
         last_a, last_b = ranges[0]
         result: List[Tuple[int, int]] = []
 
