@@ -128,4 +128,26 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# If you are using PyCharm
+.idea/
+*.iws
+
+# Visual Studio Code
+.vscode/
+.history
+
+# PROJECT SPECIFIC
 *.jpg
+*.png
+!/assets/*
+gui-config.json
+*.exe
+
+# PROJECT SPECIFIC: zipped files
+*.rar
+*.7z
+*.zip
+*.tar
+*.gz
+*.bz2
+*.xz
