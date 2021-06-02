@@ -11,6 +11,6 @@ pyinstaller-hooks-contrib==2020.10
 pywin32-ctypes==0.2.0
 requests[socks]==2.25.0
 six==1.15.0
-urllib3==1.26.4
+urllib3==1.26.5
 validators==0.18.1
 cachetools==4.1.1
